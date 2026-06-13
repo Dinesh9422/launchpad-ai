@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
+import ResumeEditor from './pages/ResumeEditor';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -22,6 +23,9 @@ function AppRoutes() {
         <ProtectedRoute><Onboarding /></ProtectedRoute>
       } />
       <Route path="/" element={<Navigate to="/register" />} />
+      <Route path="/resume" element={
+        <ProtectedRoute><ResumeEditor /></ProtectedRoute>
+      } />
     </Routes>
   );
 }
