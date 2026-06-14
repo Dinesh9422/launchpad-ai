@@ -20,10 +20,6 @@ export default function ResumeEditor() {
 
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  useEffect(() => {
-    fetchResume();
-  }, []);
-
   const fetchResume = async () => {
     try {
       const res = await axios.get(`${API_URL}/me/`, config);
@@ -33,6 +29,11 @@ export default function ResumeEditor() {
     }
     setLoading(false);
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchResume();
+  }, []);
 
   const handleChange = (e) => setResume({ ...resume, [e.target.name]: e.target.value });
 
