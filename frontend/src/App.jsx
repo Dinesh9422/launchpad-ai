@@ -8,6 +8,7 @@ import ResumeEditor from './pages/ResumeEditor';
 import JobSearch from './pages/JobSearch';
 import ApplicationTracker from './pages/ApplicationTracker';
 import SkillGap from './pages/SkillGap';
+import MockInterview from './pages/MockInterview';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -37,6 +38,9 @@ function AppRoutes() {
       } />
       <Route path="/skillgap" element={
         <ProtectedRoute><SkillGap /></ProtectedRoute>
+      } />
+      <Route path="/interview" element={
+        <ProtectedRoute><MockInterview /></ProtectedRoute>
       } />
     </Routes>
   );
