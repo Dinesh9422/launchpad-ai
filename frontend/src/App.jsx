@@ -7,6 +7,7 @@ import Onboarding from './pages/Onboarding';
 import ResumeEditor from './pages/ResumeEditor';
 import JobSearch from './pages/JobSearch';
 import ApplicationTracker from './pages/ApplicationTracker';
+import SkillGap from './pages/SkillGap';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -33,6 +34,9 @@ function AppRoutes() {
       } />
       <Route path="/tracker" element={
         <ProtectedRoute><ApplicationTracker /></ProtectedRoute>
+      } />
+      <Route path="/skillgap" element={
+        <ProtectedRoute><SkillGap /></ProtectedRoute>
       } />
     </Routes>
   );

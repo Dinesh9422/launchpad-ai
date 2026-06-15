@@ -9,4 +9,5 @@ urlpatterns = [
     path('api/profiles/', include('profiles.urls')),
     path('api/resumes/', include('resumes.urls')),
     path('api/jobs/', include('jobs.urls')),
+    path('api/skillgap/', include('skillgap.urls')),
 ]
