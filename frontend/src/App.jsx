@@ -9,6 +9,7 @@ import JobSearch from './pages/JobSearch';
 import ApplicationTracker from './pages/ApplicationTracker';
 import SkillGap from './pages/SkillGap';
 import MockInterview from './pages/MockInterview';
+import InsightsDashboard from './pages/InsightsDashboard';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -41,6 +42,9 @@ function AppRoutes() {
       } />
       <Route path="/interview" element={
         <ProtectedRoute><MockInterview /></ProtectedRoute>
+      } />
+      <Route path="/insights" element={
+        <ProtectedRoute><InsightsDashboard /></ProtectedRoute>
       } />
     </Routes>
   );
