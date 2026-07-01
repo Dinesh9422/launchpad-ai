@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const API_URL = 'http://127.0.0.1:8000/api/insights';
-
-const COLORS = ['#3b4cca', '#e65100', '#0a6640', '#cc3b3b', '#6a1b9a', '#01579b'];
+const COLORS = ['#4f46e5', '#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626'];
 
 export default function InsightsDashboard() {
   const { token } = useAuth();
@@ -20,121 +19,128 @@ export default function InsightsDashboard() {
 
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchData = async () => {
-    try {
-      const [marketRes, statsRes, benchRes] = await Promise.all([
-        axios.get(`${API_URL}/market/`, config),
-        axios.get(`${API_URL}/stats/`, config),
-        axios.get(`${API_URL}/benchmarking/`, config),
-      ]);
-      setMarketData(marketRes.data);
-      setUserStats(statsRes.data);
-      setBenchmarkData(benchRes.data);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [mRes, sRes, bRes] = await Promise.all([
+          axios.get(`${API_URL}/market/`, config),
+          axios.get(`${API_URL}/stats/`, config),
+          axios.get(`${API_URL}/benchmarking/`, config),
+        ]);
+        setMarketData(mRes.data);
+        setUserStats(sRes.data);
+        setBenchmarkData(bRes.data);
+      } catch (err) { console.error(err); }
+      setLoading(false);
+    };
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line
 
   const searchSalary = async () => {
     try {
       const res = await axios.get(`${API_URL}/salary/?role=${salaryRole}&city=${salaryCity}`, config);
       setSalaryData(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  if (loading) return <p style={{ textAlign: 'center', marginTop: 50 }}>Loading dashboard...</p>;
+  const tabs = [
+    ['overview', '📊 Overview'],
+    ['salary', '💰 Salary'],
+    ['benchmarking', '👥 Peers'],
+    ['my stats', '📈 My Stats'],
+  ];
+
+  if (loading) return (
+    <div className="p-8">
+      <div className="animate-pulse space-y-4">
+        {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl" />)}
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: 1100, margin: '20px auto', padding: 20 }}>
-      <h2>Career Insights Dashboard</h2>
+    <div className="min-h-screen p-6 md:p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Career Insights</h1>
+        <p className="text-gray-500 dark:text-gray-400">Market trends, salary data & peer benchmarking</p>
+      </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 5, marginBottom: 20, flexWrap: 'wrap' }}>
-        {['overview', 'salary', 'benchmarking', 'my stats'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            style={{ padding: '8px 16px', background: activeTab === tab ? '#3b4cca' : '#eee', color: activeTab === tab ? '#fff' : '#000', border: 'none', borderRadius: 5, textTransform: 'capitalize' }}>
-            {tab === 'overview' ? '📊 Overview' : tab === 'salary' ? '💰 Salary' : tab === 'benchmarking' ? '👥 Benchmarking' : '📈 My Stats'}
+      <div className="flex gap-2 flex-wrap mb-6">
+        {tabs.map(([key, label]) => (
+          <button key={key} onClick={() => setActiveTab(key)}
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={activeTab === key
+              ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: 'white' }
+              : { background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb' }}>
+            {label}
           </button>
         ))}
       </div>
 
-      {/* Overview Tab */}
+      {/* Overview */}
       {activeTab === 'overview' && marketData && (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15, marginBottom: 20 }}>
-            <div style={{ background: '#f0f4ff', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#3b4cca', fontSize: 28 }}>{marketData.total_jobs}</h3>
-              <p style={{ margin: 0, color: '#666' }}>Total Jobs</p>
-            </div>
-            <div style={{ background: '#f0fff4', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#0a6640', fontSize: 28 }}>{marketData.top_roles?.length}</h3>
-              <p style={{ margin: 0, color: '#666' }}>Top Roles Tracked</p>
-            </div>
-            <div style={{ background: '#fff8e1', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#e65100', fontSize: 28 }}>{marketData.top_skills?.length}</h3>
-              <p style={{ margin: 0, color: '#666' }}>In-demand Skills</p>
-            </div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[
+              { label: 'Total Jobs', value: marketData.total_jobs, icon: '💼', color: 'from-indigo-500 to-violet-600' },
+              { label: 'Top Roles', value: marketData.top_roles?.length, icon: '🎯', color: 'from-emerald-500 to-teal-600' },
+              { label: 'In-demand Skills', value: marketData.top_skills?.length, icon: '🔥', color: 'from-amber-500 to-orange-600' },
+            ].map((stat, i) => (
+              <div key={i} className={`rounded-2xl p-5 bg-gradient-to-br ${stat.color} text-white`}>
+                <div className="text-2xl mb-2">{stat.icon}</div>
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-sm opacity-80">{stat.label}</div>
+              </div>
+            ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            {/* Top Skills Chart */}
-            <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 15 }}>
-              <h4>🔥 Most In-demand Skills</h4>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">🔥 Most In-demand Skills</h4>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={marketData.top_skills}>
-                  <XAxis dataKey="skill" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#3b4cca" />
+                  <XAxis dataKey="skill" tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ background: '#1f2937', border: 'none', borderRadius: 8, color: '#f9fafb' }} />
+                  <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Source Distribution */}
-            <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 15 }}>
-              <h4>📋 Jobs by Portal</h4>
+            <div className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">📋 Jobs by Portal</h4>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={marketData.source_distribution} dataKey="count" nameKey="source" cx="50%" cy="50%" outerRadius={70} label={({ source, percent }) => `${source} ${(percent * 100).toFixed(0)}%`}>
-                    {marketData.source_distribution?.map((_, index) => (
-                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                  <Pie data={marketData.source_distribution} dataKey="count" nameKey="source" cx="50%" cy="50%" outerRadius={70}
+                    label={({ source, percent }) => `${source} ${(percent * 100).toFixed(0)}%`}>
+                    {marketData.source_distribution?.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ background: '#1f2937', border: 'none', borderRadius: 8, color: '#f9fafb' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Top Cities */}
-            <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 15 }}>
-              <h4>🏙️ Top Hiring Cities</h4>
+            <div className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">🏙️ Top Hiring Cities</h4>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={marketData.top_cities} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis dataKey="location" type="category" tick={{ fontSize: 10 }} width={80} />
-                  <Tooltip />
-                  <Bar dataKey="job_count" fill="#0a6640" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <YAxis dataKey="location" type="category" tick={{ fontSize: 10, fill: '#9ca3af' }} width={80} />
+                  <Tooltip contentStyle={{ background: '#1f2937', border: 'none', borderRadius: 8, color: '#f9fafb' }} />
+                  <Bar dataKey="job_count" fill="#059669" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Top Roles */}
-            <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 15 }}>
-              <h4>💼 Top Roles by Demand</h4>
+            <div className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">💼 Top Roles by Demand</h4>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={marketData.top_roles} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
-                  <YAxis dataKey="role" type="category" tick={{ fontSize: 10 }} width={120} />
-                  <Tooltip />
-                  <Bar dataKey="avg_demand" fill="#e65100" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                  <YAxis dataKey="role" type="category" tick={{ fontSize: 10, fill: '#9ca3af' }} width={120} />
+                  <Tooltip contentStyle={{ background: '#1f2937', border: 'none', borderRadius: 8, color: '#f9fafb' }} />
+                  <Bar dataKey="avg_demand" fill="#d97706" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -142,129 +148,101 @@ export default function InsightsDashboard() {
         </div>
       )}
 
-      {/* Salary Tab */}
+      {/* Salary */}
       {activeTab === 'salary' && (
         <div>
-          <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 20, marginBottom: 20 }}>
-            <h4>💰 Salary Intelligence</h4>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <input placeholder="Role (e.g. Python Developer)" value={salaryRole}
-                onChange={(e) => setSalaryRole(e.target.value)}
-                style={{ flex: 1, padding: 10 }} />
-              <input placeholder="City (e.g. Bangalore)" value={salaryCity}
-                onChange={(e) => setSalaryCity(e.target.value)}
-                style={{ flex: 1, padding: 10 }} />
-              <button onClick={searchSalary}
-                style={{ padding: '10px 20px', background: '#3b4cca', color: '#fff', border: 'none', borderRadius: 5 }}>
-                Search
-              </button>
+          <div className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 mb-5">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Search Salary Data</h4>
+            <div className="flex gap-3 flex-wrap">
+              <input placeholder="Role (e.g. Python Developer)" value={salaryRole} onChange={(e) => setSalaryRole(e.target.value)}
+                className="flex-1 min-w-48 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white outline-none text-sm" />
+              <input placeholder="City (e.g. Bangalore)" value={salaryCity} onChange={(e) => setSalaryCity(e.target.value)}
+                className="flex-1 min-w-32 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white outline-none text-sm" />
+              <button onClick={searchSalary} className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold"
+                style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>Search</button>
             </div>
           </div>
 
-          {salaryData.map((item, i) => (
-            <div key={i} style={{ border: '1px solid #ddd', borderRadius: 10, padding: 15, marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0 }}>{item.role} — {item.city}</h4>
-                <span style={{ background: '#f0f4ff', padding: '4px 12px', borderRadius: 10, color: '#3b4cca', fontWeight: 'bold' }}>
-                  Demand: {item.demand_score}/100
-                </span>
+          <div className="space-y-4">
+            {salaryData.map((item, i) => (
+              <div key={i} className="rounded-2xl p-5 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{item.role}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">📍 {item.city}</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
+                    Demand {item.demand_score}/100
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[['Min', item.min_salary, 'text-red-500'], ['Average', item.avg_salary, 'text-indigo-600 dark:text-indigo-400 text-xl'], ['Max', item.max_salary, 'text-emerald-500']].map(([label, val, cls]) => (
+                    <div key={label} className="text-center p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                      <p className="text-xs text-gray-500 mb-1">{label}</p>
+                      <p className={`font-bold ${cls}`}>₹{(val / 100000).toFixed(1)} LPA</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400"><strong>Skills:</strong> {item.top_skills.join(', ')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1"><strong>Companies:</strong> {item.hiring_companies.join(', ')}</p>
               </div>
-              <div style={{ display: 'flex', gap: 20, margin: '10px 0' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0, color: '#888', fontSize: 12 }}>Min</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: '#cc3b3b' }}>₹{(item.min_salary / 100000).toFixed(1)} LPA</p>
+            ))}
+            {salaryData.length === 0 && (
+              <div className="rounded-2xl p-10 border-2 border-dashed border-gray-200 dark:border-gray-700 text-center">
+                <p className="text-gray-400">Search for role + city to see salary data</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Benchmarking */}
+      {activeTab === 'benchmarking' && benchmarkData && (
+        <div className="max-w-lg">
+          <div className="rounded-2xl p-6 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-4">👥 {benchmarkData.target_role} Peers</h4>
+            {benchmarkData.message && !benchmarkData.percentile ? (
+              <p className="text-gray-500">{benchmarkData.message}</p>
+            ) : (
+              <div>
+                <div className="text-center mb-6">
+                  <div className="text-5xl font-bold mb-1" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {benchmarkData.percentile}th
+                  </div>
+                  <p className="text-gray-500 text-sm">Percentile</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{benchmarkData.message}</p>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0, color: '#888', fontSize: 12 }}>Average</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: '#3b4cca', fontSize: 18 }}>₹{(item.avg_salary / 100000).toFixed(1)} LPA</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0, color: '#888', fontSize: 12 }}>Max</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', color: '#0a6640' }}>₹{(item.max_salary / 100000).toFixed(1)} LPA</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[['Your Score', benchmarkData.your_score, 'from-indigo-500 to-violet-600'], ['Avg Peers', benchmarkData.avg_peer_score, 'from-gray-500 to-gray-600'], ['Total Peers', benchmarkData.total_peers, 'from-emerald-500 to-teal-600']].map(([label, val, grad]) => (
+                    <div key={label} className={`rounded-xl p-3 bg-gradient-to-br ${grad} text-white text-center`}>
+                      <div className="text-2xl font-bold">{val}</div>
+                      <div className="text-xs opacity-80">{label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <p style={{ margin: '5px 0', fontSize: 13 }}><strong>Top Skills:</strong> {item.top_skills.join(', ')}</p>
-              <p style={{ margin: 0, fontSize: 13 }}><strong>Hiring:</strong> {item.hiring_companies.join(', ')}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* My Stats */}
+      {activeTab === 'my stats' && userStats && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { label: 'Applications', value: userStats.total_applications, icon: '📨', color: 'from-blue-500 to-indigo-600' },
+            { label: 'Interview Rate', value: `${userStats.interview_rate}%`, icon: '🎤', color: 'from-amber-500 to-orange-600' },
+            { label: 'Offer Rate', value: `${userStats.offer_rate}%`, icon: '🎉', color: 'from-emerald-500 to-teal-600' },
+            { label: 'Mock Sessions', value: userStats.total_mock_sessions, icon: '🎯', color: 'from-violet-500 to-purple-600' },
+            { label: 'Avg Interview Score', value: `${userStats.avg_mock_interview_score}/10`, icon: '⭐', color: 'from-green-500 to-emerald-600' },
+            { label: 'Rejections', value: userStats.rejected_count, icon: '❌', color: 'from-red-500 to-rose-600' },
+          ].map((stat, i) => (
+            <div key={i} className={`rounded-2xl p-5 bg-gradient-to-br ${stat.color} text-white`}>
+              <div className="text-2xl mb-2">{stat.icon}</div>
+              <div className="text-3xl font-bold">{stat.value}</div>
+              <div className="text-sm opacity-80 mt-1">{stat.label}</div>
             </div>
           ))}
-
-          {salaryData.length === 0 && (
-            <p style={{ color: '#888', textAlign: 'center' }}>Search for a role and city to see salary data</p>
-          )}
-        </div>
-      )}
-
-      {/* Benchmarking Tab */}
-      {activeTab === 'benchmarking' && benchmarkData && (
-        <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: 20 }}>
-          <h4>👥 Peer Benchmarking — {benchmarkData.target_role}</h4>
-          {benchmarkData.message && !benchmarkData.percentile ? (
-            <p>{benchmarkData.message}</p>
-          ) : (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <h2 style={{ color: '#3b4cca' }}>{benchmarkData.percentile}th Percentile</h2>
-                <p>{benchmarkData.message}</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15, marginBottom: 20 }}>
-                <div style={{ background: '#f0f4ff', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, color: '#3b4cca' }}>{benchmarkData.your_score}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: '#666' }}>Your Score</p>
-                </div>
-                <div style={{ background: '#f5f5f5', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-                  <h3 style={{ margin: 0 }}>{benchmarkData.avg_peer_score}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: '#666' }}>Avg Peer Score</p>
-                </div>
-                <div style={{ background: '#f0fff4', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, color: '#0a6640' }}>{benchmarkData.total_peers}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: '#666' }}>Total Peers</p>
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={150}>
-                <BarChart data={[
-                  { name: 'You', score: benchmarkData.your_score },
-                  { name: 'Avg Peer', score: benchmarkData.avg_peer_score },
-                ]}>
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Bar dataKey="score" fill="#3b4cca" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* My Stats Tab */}
-      {activeTab === 'my stats' && userStats && (
-        <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15, marginBottom: 20 }}>
-            <div style={{ background: '#f0f4ff', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#3b4cca', fontSize: 28 }}>{userStats.total_applications}</h3>
-              <p style={{ margin: 0, color: '#666' }}>Total Applications</p>
-            </div>
-            <div style={{ background: '#fff8e1', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#e65100', fontSize: 28 }}>{userStats.interview_rate}%</h3>
-              <p style={{ margin: 0, color: '#666' }}>Interview Rate</p>
-            </div>
-            <div style={{ background: '#f0fff4', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#0a6640', fontSize: 28 }}>{userStats.offer_rate}%</h3>
-              <p style={{ margin: 0, color: '#666' }}>Offer Rate</p>
-            </div>
-            <div style={{ background: '#f3e5f5', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#6a1b9a', fontSize: 28 }}>{userStats.total_mock_sessions}</h3>
-              <p style={{ margin: 0, color: '#666' }}>Mock Sessions</p>
-            </div>
-            <div style={{ background: '#e8f5e9', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#0a6640', fontSize: 28 }}>{userStats.avg_mock_interview_score}/10</h3>
-              <p style={{ margin: 0, color: '#666' }}>Avg Interview Score</p>
-            </div>
-            <div style={{ background: '#fce4ec', borderRadius: 10, padding: 15, textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: '#cc3b3b', fontSize: 28 }}>{userStats.rejected_count}</h3>
-              <p style={{ margin: 0, color: '#666' }}>Rejections</p>
-            </div>
-          </div>
         </div>
       )}
     </div>

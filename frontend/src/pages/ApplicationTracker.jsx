@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const API_URL = 'http://127.0.0.1:8000/api/jobs';
 
 const COLUMNS = [
-  { key: 'applied', label: '📨 Applied', color: '#3b4cca' },
-  { key: 'interview', label: '🎯 Interview', color: '#e65100' },
-  { key: 'offer', label: '✅ Offer', color: '#0a6640' },
-  { key: 'rejected', label: '❌ Rejected', color: '#cc3b3b' },
+  { key: 'applied', label: 'Applied', icon: '📨', color: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50 dark:bg-blue-950', border: 'border-blue-200 dark:border-blue-800' },
+  { key: 'interview', label: 'Interview', icon: '🎯', color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 dark:bg-amber-950', border: 'border-amber-200 dark:border-amber-800' },
+  { key: 'offer', label: 'Offer', icon: '✅', color: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50 dark:bg-emerald-950', border: 'border-emerald-200 dark:border-emerald-800' },
+  { key: 'rejected', label: 'Rejected', icon: '❌', color: 'from-red-500 to-rose-600', bg: 'bg-red-50 dark:bg-red-950', border: 'border-red-200 dark:border-red-800' },
 ];
 
 export default function ApplicationTracker() {
@@ -19,103 +20,131 @@ export default function ApplicationTracker() {
 
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchApplications = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/applications/`, config);
-      setApplications(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchApplications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const fetchApps = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/applications/`, config);
+        setApplications(res.data);
+      } catch (err) { console.error(err); }
+      setLoading(false);
+    };
+    fetchApps();
+  }, []); // eslint-disable-line
 
   const updateStatus = async (appId, newStatus) => {
     try {
       await axios.put(`${API_URL}/applications/${appId}/`, { status: newStatus }, config);
-      setApplications(applications.map(app =>
-        app.id === appId ? { ...app, status: newStatus } : app
-      ));
-    } catch (err) {
-      console.error(err);
-    }
+      setApplications(applications.map(app => app.id === appId ? { ...app, status: newStatus } : app));
+      toast.success('Status updated!');
+    } catch { toast.error('Update failed'); }
   };
 
   const updateNotes = async (appId) => {
     try {
       await axios.put(`${API_URL}/applications/${appId}/`, { notes: notes[appId] || '' }, config);
-      setApplications(applications.map(app =>
-        app.id === appId ? { ...app, notes: notes[appId] || '' } : app
-      ));
-      alert('Notes saved!');
-    } catch (err) {
-      console.error(err);
-    }
+      setApplications(applications.map(app => app.id === appId ? { ...app, notes: notes[appId] || '' } : app));
+      toast.success('Notes saved!');
+    } catch { toast.error('Save failed'); }
   };
 
   const deleteApplication = async (appId) => {
     try {
       await axios.delete(`${API_URL}/applications/${appId}/`, config);
       setApplications(applications.filter(app => app.id !== appId));
-    } catch (err) {
-      console.error(err);
-    }
+      toast.success('Removed!');
+    } catch { toast.error('Delete failed'); }
   };
 
   const getByStatus = (status) => applications.filter(app => app.status === status);
 
-  if (loading) return <p style={{ textAlign: 'center', marginTop: 50 }}>Loading applications...</p>;
+  if (loading) return (
+    <div className="p-8">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6 animate-pulse" />
+      <div className="grid grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-64 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ padding: 20, maxWidth: 1200, margin: '0 auto' }}>
-      <h2>Application Tracker</h2>
-      <p style={{ color: '#666' }}>Total: {applications.length} applications</p>
+    <div className="min-h-screen p-6 md:p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Application Tracker</h1>
+        <p className="text-gray-500 dark:text-gray-400">Track your job applications with Kanban board</p>
+      </div>
 
-      <div style={{ display: 'flex', gap: 15, overflowX: 'auto' }}>
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-3 mb-8">
         {COLUMNS.map(col => (
-          <div key={col.key} style={{ minWidth: 260, flex: 1 }}>
-            <div style={{ background: col.color, color: '#fff', padding: '8px 12px', borderRadius: '8px 8px 0 0', fontWeight: 'bold' }}>
-              {col.label} ({getByStatus(col.key).length})
+          <div key={col.key} className={`rounded-2xl p-4 ${col.bg} border ${col.border}`}>
+            <div className="text-2xl mb-1">{col.icon}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{getByStatus(col.key).length}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{col.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Kanban board */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {COLUMNS.map(col => (
+          <div key={col.key} className="flex flex-col">
+            {/* Column header */}
+            <div className={`rounded-xl p-3 mb-3 bg-gradient-to-r ${col.color} flex items-center justify-between`}>
+              <div className="flex items-center gap-2">
+                <span>{col.icon}</span>
+                <span className="text-white font-semibold text-sm">{col.label}</span>
+              </div>
+              <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {getByStatus(col.key).length}
+              </span>
             </div>
-            <div style={{ background: '#f5f5f5', borderRadius: '0 0 8px 8px', padding: 10, minHeight: 200 }}>
+
+            {/* Cards */}
+            <div className="flex flex-col gap-3 min-h-32">
               {getByStatus(col.key).map(app => (
-                <div key={app.id} style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: 12, marginBottom: 10 }}>
-                  <h4 style={{ margin: '0 0 4px' }}>{app.job.title}</h4>
-                  <p style={{ margin: '0 0 4px', color: '#555', fontSize: 13 }}>{app.job.company} — {app.job.location}</p>
-                  <p style={{ margin: '0 0 8px', fontSize: 12, color: '#888' }}>
-                    Applied: {new Date(app.applied_date).toLocaleDateString()}
+                <div key={app.id}
+                  className="rounded-xl p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{app.job.title}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    🏢 {app.job.company}<br />📍 {app.job.location}
+                  </p>
+                  <p className="text-xs text-gray-400 mb-3">
+                    {new Date(app.applied_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
 
                   <select value={app.status} onChange={(e) => updateStatus(app.id, e.target.value)}
-                    style={{ width: '100%', padding: 6, marginBottom: 8, fontSize: 12 }}>
+                    className="w-full text-xs px-2 py-1.5 rounded-lg mb-2 outline-none bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                     <option value="applied">Applied</option>
-                    <option value="interview">Interview Scheduled</option>
+                    <option value="interview">Interview</option>
                     <option value="offer">Offer</option>
                     <option value="rejected">Rejected</option>
                   </select>
 
-                  <textarea placeholder="Add notes..." defaultValue={app.notes}
+                  <textarea placeholder="Notes..." defaultValue={app.notes}
                     onChange={(e) => setNotes({ ...notes, [app.id]: e.target.value })}
-                    style={{ width: '100%', padding: 6, fontSize: 12, height: 50, boxSizing: 'border-box' }} />
+                    className="w-full text-xs px-2 py-1.5 rounded-lg mb-2 outline-none resize-none h-16 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700" />
 
-                  <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                  <div className="flex gap-2">
                     <button onClick={() => updateNotes(app.id)}
-                      style={{ flex: 1, padding: 5, fontSize: 11, background: '#3b4cca', color: '#fff', border: 'none', borderRadius: 4 }}>
-                      Save Notes
+                      className="flex-1 text-xs py-1.5 rounded-lg text-white font-medium transition-all"
+                      style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
+                      Save
                     </button>
                     <button onClick={() => deleteApplication(app.id)}
-                      style={{ padding: 5, fontSize: 11, background: '#cc3b3b', color: '#fff', border: 'none', borderRadius: 4 }}>
-                      Remove
+                      className="px-3 py-1.5 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all border border-red-200 dark:border-red-800">
+                      ✕
                     </button>
                   </div>
                 </div>
               ))}
+
               {getByStatus(col.key).length === 0 && (
-                <p style={{ color: '#aaa', textAlign: 'center', padding: 20, fontSize: 13 }}>No applications</p>
+                <div className="rounded-xl p-6 border-2 border-dashed border-gray-200 dark:border-gray-700 text-center">
+                  <p className="text-xs text-gray-400">No applications</p>
+                </div>
               )}
             </div>
           </div>
