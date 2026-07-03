@@ -10,7 +10,7 @@ import Onboarding from './pages/Onboarding';
 import ResumeEditor from './pages/ResumeEditor';
 import JobSearch from './pages/JobSearch';
 import ApplicationTracker from './pages/ApplicationTracker';
-import SkillGap from './pages/SkillGap';
+import SkillGap from './pages/skillgap';
 import MockInterview from './pages/MockInterview';
 import InsightsDashboard from './pages/InsightsDashboard';
 
