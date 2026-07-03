@@ -1,9 +1,10 @@
 import { createContext, useState, useContext } from 'react';
 import axios from 'axios';
+import API_BASE from './config';
 
 const AuthContext = createContext();
 
-const API_URL = 'http://127.0.0.1:8000/api/auth';
+const API_URL = `${API_BASE}/api/auth`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);

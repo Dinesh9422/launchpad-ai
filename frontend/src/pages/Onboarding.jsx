@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import API_BASE from '../config';
 
-const API_URL = 'http://127.0.0.1:8000/api/profiles';
+const API_URL = `${API_BASE}/api/profiles`;
 
 export default function Onboarding() {
   const { token, user } = useAuth();

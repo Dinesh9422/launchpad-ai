@@ -2,8 +2,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+import API_BASE from '../config';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = `${API_BASE}/api`;
 
 function AnimatedCounter({ target, duration = 2000 }) {
   const [count, setCount] = useState(0);

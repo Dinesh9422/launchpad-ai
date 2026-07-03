@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import API_BASE from '../config';
 
-const API_URL = 'http://127.0.0.1:8000/api/jobs';
+const API_URL = `${API_BASE}/api/jobs`;
 
 const COLUMNS = [
   { key: 'applied', label: 'Applied', icon: '📨', color: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50 dark:bg-blue-950', border: 'border-blue-200 dark:border-blue-800' },

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import API_BASE from '../config';
 
-const API_URL = 'http://127.0.0.1:8000/api/insights';
+const API_URL = `${API_BASE}/api/insights`;
 const COLORS = ['#4f46e5', '#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626'];
 
 export default function InsightsDashboard() {
